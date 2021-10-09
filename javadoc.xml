@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project default="javadoc">
+    <target name="javadoc">
+        <javadoc access="private" additionalparam="--allow-script-in-comments " author="true" classpath="." destdir="doc" doctitle="TXTraffic Analyzer - read out FTP logs files" nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false" packagenames="com.txtsoft.ftptrafficanalyzer" source="11" sourcepath="src" splitindex="true" use="true" version="true"/>
+    </target>
+</project>
