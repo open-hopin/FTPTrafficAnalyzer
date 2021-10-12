@@ -3,14 +3,25 @@ to get console download statistics from standard FTP 'logs' files
 
 Version 1.00
 
+Eclipse project
+
 <img src="FTPTrafficAnalyzer128.png" alt="program icon"> 
 
 Compiler compliance level 11, so you need OpenJDK 11 or later separately installed to run
 the program. Make sure console/terminal is shown on execution.
 
+Windows and Linux application, consisting of files:
+- FTPTrafficAnalyzer-v1.00.jar
+- traffic.txt (test data, use your FTP log file)
+- config-endings.txt (optional)
+
+To use the applcation start 'FTPTrafficAnalyzer.bat' (Windows) or 'FTPTrafficAnalyzer.sh' (Linux).
+
 TXTrafficAnalyzer application expects text file "traffic.txt" (lower-case) in application directory
 to extract how many downloads are indicated and what files, according to
 files's names and paths, have been downloaded.
+
+Program output example:
 
 <img src="program-output.jpg" alt="program output to console">
  
@@ -20,7 +31,7 @@ files's names and paths, have been downloaded.
   for more valid downloads.
 - The time range of the file is extracted, additionally date and time
   of first and last download are given out. 
-- Very small project, Eclipse without build tool.
+- Very small project, Eclipse without extra build tool.
  
 EXE and .ZIP download files are extracted and counted per default.
 To get statistics for other file endings simply change content of file "config-endings.txt"
@@ -39,5 +50,6 @@ To get a suitable file containing this logging information go via your host's FT
 "logs". There you find suitable files, for example:
 - "access.log.26.gz" for the calendar week 26
 - "access.log.34.4.gz" for the calendar week 34 and the 4th day of the week, that is Thursday
+
 These files are all zipped, so unzip for example to "access.log.34.4".
 Do not forget to copy to application directory and rename to "traffic.txt".
