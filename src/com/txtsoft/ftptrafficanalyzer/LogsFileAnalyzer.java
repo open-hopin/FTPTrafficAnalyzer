@@ -32,6 +32,11 @@ import java.util.regex.Pattern;
  * This class expects the unzipped and loaded text content of a log file as basis
  * to be handed over to constructor.
  * 
+ * Only log file content of the Common Log Format
+ * (<a href="https://en.wikipedia.org/wiki/Common_Log_Format">https://en.wikipedia.org/wiki/Common_Log_Format</a>),
+ * also known as the NCSA Common log format and as the case may be headed by and/or followed by additional
+ * logged content can be analyzed successfully.
+ * 
  * @author mb
  *
  */
@@ -73,12 +78,14 @@ public class LogsFileAnalyzer {
 	public OffsetDateTime odtMax = null;
 	/**
 	 * first date and time of ZIP or EXE
-	 * download in analyzed log file
+	 * (or other endings according to file "config-endings.txt")
+	 * download (try) in analyzed log file
 	 */
 	public OffsetDateTime odtFirst = null;
 	/**
 	 * last date and time of ZIP or EXE
-	 * download in analyzed log file
+	 * (or other endings according to file "config-endings.txt")
+	 * download (try) in analyzed log file
 	 */	
 	public OffsetDateTime odtLast = null;
 
@@ -109,21 +116,39 @@ public class LogsFileAnalyzer {
 	 * Same object as {@link #tmResult}.
 	 */
 	public TreeMap<String, Integer> tmFillDownloadsCollection(String sEndings) {
-		Pattern pattern = Pattern.compile("(?i)(GET\\s.*?\\.(?:" + sEndings + "))\\s.+?\"\\s\\d+\\s\\d+\\s(.+?)\\s\"");	// get all download paths			
+		
+		Integer a = 0;
+		Boolean bEnd = false;
+		
+		// Special pattern that is naming the domain directly after number of bytes downloaded.
+		// This is a first try on a special logging format, only the second try is universal:
+		Pattern pattern = Pattern.compile("(?i)(GET\\s.*?\\.(?:" + sEndings + "))\\s.+?\"\\s(\\d+)\\s\\d+\\s(.+?)\\s\"");	// get all download paths			
 	    Matcher matcher = pattern.matcher(sToAnalyze);
 	    
 	    TreeMap<String, Integer>tm = new TreeMap<>();
-	    
-	    iTotalDownloads = 0;
-	    Integer i;
-	    while(matcher.find()) {
-	    	iTotalDownloads++;
-	        String s = matcher.group(1);
-	        s = s.substring(0, 4) + matcher.group(2) + s.substring(4);
-	        i = tm.get(s);
-	        if (i == null) i = 0;
-	        i++;
-	        tm.put(s, i);
+	    while(!bEnd) {
+		    iTotalDownloads = 0;
+		    Integer i;
+		    while(matcher.find()) {
+		    	iTotalDownloads++;
+		        String s = matcher.group(1);
+		        
+		        if (matcher.groupCount() == 3) s = s.substring(0, 4) + matcher.group(3) + s.substring(4);
+		        // else groupCount() is 1 do nothing
+		        
+		        if (matcher.group(2).equals("404")) s+= " [404 file/page not found]";
+		        
+		        i = tm.get(s);
+		        if (i == null) i = 0;
+		        i++;
+		        tm.put(s, i);
+		    }
+		    a++;
+		    if (iTotalDownloads > 0 || a > 1) bEnd = true;
+		    else {
+		    	pattern = Pattern.compile("(?i)(GET\\s.*?\\.(?:" + sEndings + "))\\s.+?\"\\s(\\d+)\\s\\d+");	// get all download paths			
+			    matcher = pattern.matcher(sToAnalyze);
+		    }
 	    }
 	    tmResult = tm;
 	    return tm;        
@@ -137,14 +162,14 @@ public class LogsFileAnalyzer {
 	 * stamps in file "traffic.txt", null when not found.
 	 * Same object as {@link #formatterFound}.
 	 */
-	public DateTimeFormatter fmFind() {
+	public DateTimeFormatter fmFindDateTimeFormatter() {
 		Pattern pattern = Pattern.compile("\\[.+?\\]"); // get all days to determine minimum and maximum
 		Matcher matcher = pattern.matcher(sToAnalyze);		
 		
 		ArrayList<DateTimeFormatter> alFormatter = new ArrayList<>();		
 		
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern(
-				"dd/LLL/yyyy:HH:mm:ss XXXX", Locale.ENGLISH); // should be the right formatter 
+				"d/LLL/yyyy:HH:mm:ss XXXX", Locale.ENGLISH); // should be the right formatter // dd in format string changed to d (08.12.2021)
 		alFormatter.add(formatter);
 		alFormatter.add(DateTimeFormatter.ISO_DATE_TIME); // some other formatter to try
 		alFormatter.add(DateTimeFormatter.ISO_INSTANT); // some other formatter to try
@@ -183,6 +208,7 @@ public class LogsFileAnalyzer {
 	 * - {@link LogsFileAnalyzer#odtMax}
 	 * - {@link LogsFileAnalyzer#odtFirst}
 	 * - {@link LogsFileAnalyzer#odtLast}
+	 * Method will do nothing if {@link #formatterFound} is null.
 	 * @param sEndings endings searched for to be included in the statistics divided
 	 * by the or sign, for example "zip|exe", upper and lower case does not matter
 	 */
@@ -190,7 +216,7 @@ public class LogsFileAnalyzer {
 		Pattern pattern = Pattern.compile("\\[.+?\\]"); // get all days to determine minimum and maximum
 		Matcher matcher = pattern.matcher(sToAnalyze);		
 		Pattern outerPattern = Pattern.compile(
-				"(?i)\\[.+?\\]\\s\"GET\\s.*?\\.(?:" + sEndings + ")\\s.+?\"\\s\\d+\\s\\d+\\s.+?\\s\"");	// get all download paths, this time including their time stamps			
+				"(?i)\\[.+?\\]\\s\"GET\\s.*?\\.(?:" + sEndings + ")\\s.+?\"\\s\\d+\\s\\d+");	// regex ending \\s.+?\\s\" commented out (06.12.2021) // get all download paths, this time including their time stamps			
 	    Matcher outerMatcher = outerPattern.matcher(sToAnalyze);
 						
 		if (formatterFound != null) { // otherwise dates are not shown

@@ -1,0 +1,11 @@
+=Open sources used for this application as included=:
+
+Out Process version 1.2.7 licensed under Apache License 2.0.
+A java library to run pieces of code in another (new) JVM.
+https://github.com/dyorgio/out-process
+https://www.apache.org/licenses/LICENSE-2.0
+
+Run As Root version 1.2.3 licensed under Apache License 2.0.
+A java library to run pieces of code as root using native root password input dialog.
+https://github.com/dyorgio/run-as-root
+https://www.apache.org/licenses/LICENSE-2.0

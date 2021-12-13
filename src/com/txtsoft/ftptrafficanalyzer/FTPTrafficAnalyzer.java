@@ -20,15 +20,41 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
+import dyorgio.runtime.run.as.root.NotAuthorizedException;
+import dyorgio.runtime.run.as.root.RootExecutor;
+import dyorgio.runtime.run.as.root.UserCanceledException;
+
 /**
- * Compiler compliance level 11, so you need OpenJDK 11 or later separately installed to run
+ * Application FTPTrafficAnalyzer - read out FTP host's log file,
+ * giving out download click statistics to Java console.
+ * The application only analyzes the Common Log Format and
+ * provides a memory effect between its invocations to
+ * also provide a long term statistic.
+ * 
+ * The Common Log Format
+ * (<a href="https://en.wikipedia.org/wiki/Common_Log_Format">https://en.wikipedia.org/wiki/Common_Log_Format</a>),
+ * also known as the NCSA Common log format, is the default for Apache HTTP Server
+ * (<a href="https://en.wikipedia.org/wiki/Apache_HTTP_Server">https://en.wikipedia.org/wiki/Apache_HTTP_Server</a>),
+ * colloquially called Apache. The logging format is consisting of:
+ * - host ident authuser date request status bytes
+ * - for Example: 127.0.0.1 user-identifier frank [10/Oct/2000:13:55:36 -0700] "GET /apache_pb.gif HTTP/1.0" 200 2326
+ * Format is set in file: <Apache install directory>\conf\httpd.conf by the line:
+ * - LogFormat "%h %l %u %t \"%r\" %>s %b" common
+ * Before and after the shown format string you can have, what you like.
+ * 
+ * Setups packages are including Java Runtime Environment. For own setup
+ * compiler compliance level is 11, so you need OpenJDK 11 or later separately installed to run
  * the program. Make sure console/terminal is shown on execution.
  * 
  * FTPTrafficAnalyzer application expects text file "traffic.txt" (lower-case) in application directory
@@ -41,8 +67,8 @@ import java.util.TreeMap;
  *   for more valid downloads.
  * - The time range of the file is extracted, additionally date and time
  *   of first and last download are given out. 
- * - Very small project, Eclipse without build tool.
- * - Tested with OpenJDK 13.
+ * - Small project, Eclipse without build tool.
+ * - Tested with OpenJDK 13 and 17.
  * 
  * EXE and .ZIP download files are extracted and counted per default.
  * To get statistics for other file endings simply change content of file "config-endings.txt"
@@ -50,7 +76,7 @@ import java.util.TreeMap;
  * Instead of download statistics you can achieve click statistics to the pages of your site,
  * so use htm, html instead of zip and exe.
  * 
- * Via command line parameter you can specify different name of the logging file
+ * Via command line unnamed parameter you can specify different name of the logging file
  * (with absolute or path relative to application directory) to be analyzed.
  * Instead you can use named parameters, for example:
  * "logfile=traffic.txt" "endingsfile=config-endings.txt"
@@ -93,7 +119,13 @@ public class FTPTrafficAnalyzer {
 	 * Only parameter -h, h, -help or help gives hints to possible parameters.
 	 */
 	public static void main(String[] args) {
-		//try {
+		
+		if (Utils.bRestrictedForAdminNeededForAccessOrRestart(FTPTrafficAnalyzer.class)) {
+			System.out.println("Writing to application directory is not possible.");
+		} else {
+			System.out.println("Writing to application directory is possible.");
+		}
+		
 		String sLogFile = null;
         String sEndingsFile = null;
         
@@ -162,12 +194,71 @@ public class FTPTrafficAnalyzer {
 	    	//TreeMap<String, Integer> tmResult = new TreeMap<>();	    	
 	        /*tmResult = */analyzer.tmFillDownloadsCollection(sEndings);
 	        
-	        /*DateTimeFormatter formatterFound = */analyzer.fmFind();
+	        /*DateTimeFormatter formatterFound = */analyzer.fmFindDateTimeFormatter();
 	        	
 			//matcher.reset();
 	        analyzer.fillGlobalDateTimes(sEndings);	
 			
-			// Give out the result to console:
+			        
+	        //===TESTING:
+	        
+	        /*Set<PosixFilePermission> ownerWritable = PosixFilePermissions.fromString("rw-r--r--");
+	        FileAttribute<?> permissions = PosixFilePermissions.asFileAttribute(ownerWritable);
+	        try {
+				Files.createFile(new File("testtest.txt").toPath(), permissions);
+			} catch (IOException ioex) {
+				ioex.printStackTrace();
+			}*/
+	        
+	        
+	        /*
+	        // Specify JVM options (optional)
+	        RootExecutor rootExecutor = null;
+			try {
+				rootExecutor = new RootExecutor("-Xmx64m");
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+
+	        // Execute privileged action
+	       
+			File fApplicationDirOrFile = new File(Utils.fActiveJarPathWithoutFilename().getAbsolutePath() + "/" + "test.txt");
+			try {
+				Runtime.getRuntime().exec("attrib +r \"" + fApplicationDirOrFile.getAbsolutePath() + "\"");
+				System.out.println("attrib without root");
+			} catch (IOException ioex) {
+				ioex.printStackTrace();
+			}
+	        try {
+				rootExecutor.run(() -> {
+					//Utils.saveString(Utils.fActiveJarPathWithoutFilename().getAbsolutePath() + "/" + "test.txt", "1 two 3");
+					
+			        System.out.println(fApplicationDirOrFile.setExecutable(true, false));
+			        System.out.println(fApplicationDirOrFile.setReadable(true, false));
+			        System.out.println(fApplicationDirOrFile.setWritable(true, false));
+			        
+			        try {
+						Runtime.getRuntime().exec("attrib +r \"" + fApplicationDirOrFile.getAbsolutePath() + "\"");
+						System.out.println("attrib with root");
+					} catch (IOException ioex) {
+						ioex.printStackTrace();
+					}
+				});
+			} catch (UserCanceledException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (NotAuthorizedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+	        */
+	        
+	        
+	        // Give out the result to console:
 	        reportToConsole(analyzer);
 			
 		} else {
@@ -176,7 +267,7 @@ public class FTPTrafficAnalyzer {
 		
 		// Wait for key input to close console window:
         System.out.println();
-        System.out.println("Press enter to continue.");
+        System.out.println("Press enter to end.");
         try {
 			char ch = (char) System.in.read();
 			//System.out.println(ch);
@@ -250,7 +341,9 @@ public class FTPTrafficAnalyzer {
 	
 	/**
 	 * Method gives out some lines to the Java console with result statistics
-	 * of handed over analysis.
+	 * of handed over analysis. The dates and times part is only given out as far
+	 * as handed over member values, for example {@link LogsFileAnalyzer#odtMin},
+	 * are not null.
 	 * @param lfAnalyzer to be given out as text to Java console
 	 */
 	private static void reportToConsole(LogsFileAnalyzer lfAnalyzer) {

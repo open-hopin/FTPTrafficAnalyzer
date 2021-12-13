@@ -6,5 +6,15 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="lib" path="lib/run-as-root-1.2.3.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:platform:/resource/ft/lib/run-as-root-1.2.3-javadoc.jar!/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="lib/out-process-1.2.7.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:platform:/resource/ft/lib/out-process-1.2.7-javadoc.jar!/"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
